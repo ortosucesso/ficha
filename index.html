@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FICHA CLÍNICA ORTODÔNTICA</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- jsPDF and html2canvas for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Tailwind gray-50 */
+            color: #334155; /* Tailwind slate-700 */
+        }
+        .container {
+            max-width: 800px; /* Slightly smaller for a more compact form */
+        }
+        .section-title {
+            border-bottom: 2px solid #cbd5e1; /* Tailwind slate-300 */
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1e293b; /* Tailwind slate-800 */
+        }
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1; /* Tailwind slate-300 */
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            color: #475569; /* Tailwind slate-600 */
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #0d9488; /* Tailwind teal-600 */
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2); /* Teal-600 with opacity */
+        }
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+        .checkbox-item input[type="checkbox"],
+        .checkbox-item input[type="radio"] {
+            margin-right: 0.6rem;
+            width: 1.15rem;
+            height: 1.15rem;
+            border-radius: 0.25rem;
+            border: 1px solid #94a3b8; /* Tailwind slate-400 */
+            accent-color: #0d9488; /* Tailwind teal-600 */
+        }
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .message-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+            text-align: center;
+        }
+        .message-box.success {
+            background-color: #d1fae5; /* Tailwind green-100 */
+            color: #065f46; /* Tailwind green-800 */
+        }
+        .message-box.error {
+            background-color: #fee2e2; /* Tailwind red-100 */
+            color: #991b1b; /* Tailwind red-800 */
+        }
+        .form-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        }
+        .form-buttons button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.2s;
+            cursor: pointer;
+            flex-grow: 1; /* Allow buttons to grow */
+            min-width: 150px; /* Minimum width for buttons */
+        }
+        .form-buttons button.primary {
+            background-color: #0d9488; /* Tailwind teal-600 */
+            color: white;
+        }
+        .form-buttons button.primary:hover {
+            background-color: #0f766e; /* Tailwind teal-700 */
+            transform: translateY(-2px);
+        }
+        .form-buttons button.secondary {
+            background-color: #e2e8f0; /* Tailwind slate-200 */
+            color: #475569; /* Tailwind slate-600 */
+        }
+        .form-buttons button.secondary:hover {
+            background-color: #cbd5e1; /* Tailwind slate-300 */
+            transform: translateY(-2px);
+        }
+        .form-buttons button.pdf {
+            background-color: #dc2626; /* Tailwind red-600 */
+            color: white;
+        }
+        .form-buttons button.pdf:hover {
+            background-color: #b91c1c; /* Tailwind red-700 */
+            transform: translateY(-2px);
+        }
+        .saved-forms-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: #f1f5f9; /* Tailwind slate-100 */
+        }
+        .saved-forms-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .saved-forms-list-item:last-child {
+            border-bottom: none;
+        }
+        .saved-forms-list-item button {
+            background-color: #3b82f6; /* Tailwind blue-500 */
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            transition: background-color 0.2s;
+        }
+        .saved-forms-list-item button:hover {
+            background-color: #2563eb; /* Tailwind blue-600 */
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 lg:p-8">
+    <div class="container mx-auto bg-white shadow-lg rounded-xl p-6 sm:p-8 lg:p-10 my-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-teal-700 mb-2">FICHA CLÍNICA ORTODÔNTICA</h1>
+            <div class="flex flex-col sm:flex-row items-center justify-center text-xl sm:text-2xl font-medium text-slate-600 gap-2 sm:gap-4">
+                <div class="flex items-center">
+                    <label for="orthodontistName" class="mr-2 whitespace-nowrap">Ortodontista:</label>
+                    <input type="text" id="orthodontistName" class="form-input w-full sm:w-auto max-w-xs" placeholder="Nome do Ortodontista">
+                </div>
+                <div class="flex items-center text-base text-slate-500">
+                    ID do Usuário: <span id="userIdDisplay" class="font-bold text-slate-700 ml-1">Carregando...</span>
+                </div>
+            </div>
+        </header>
+
+        <div id="messageBox" class="message-box hidden"></div>
+
+        <form id="orthoForm">
+            <!-- I. Dados do Paciente -->
+            <section class="form-group">
+                <h2 class="text-2xl font-semibold text-slate-700 section-title">I. Dados do Paciente</h2>
+                <div class="mb-4">
+                    <label for="patientName" class="form-label">Nome:</label>
+                    <input type="text" id="patientName" class="form-input" placeholder="Nome completo do paciente" required>
+                </div>
+                <div class="mb-4">
+                    <label for="patientAge" class="form-label">Idade:</label>
+                    <input type="number" id="patientAge" class="form-input" placeholder="Idade do paciente">
+                </div>
+                <div>
+                    <label for="mainComplaint" class="form-label">Queixa Principal:</label>
+                    <textarea id="mainComplaint" class="form-textarea" rows="2" placeholder="Descreva a principal queixa do paciente"></textarea>
+                </div>
+            </section>
+
+            <!-- II. Resumo do Diagnóstico -->
+            <section class="form-group">
+                <h2 class="text-2xl font-semibold text-slate-700 section-title">II. Resumo do Diagnóstico</h2>
+                <p class="form-label">Problemas Principais:</p>
+                <div class="checkbox-group">
+                    <div class="checkbox-item"><input type="checkbox" id="apinhamento"> <label for="apinhamento">Apinhamento</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="espacamento"> <label for="espacamento">Espaçamento</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="mordidaAberta"> <label for="mordidaAberta">Mordida Aberta</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="mordidaProfunda"> <label for="mordidaProfunda">Mordida Profunda</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="mordidaCruzada"> <label for="mordidaCruzada">Mordida Cruzada</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="classeI"> <label for="classeI">Classe I</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="classeII"> <label for="classeII">Classe II</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="classeIII"> <label for="classeIII">Classe III</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="diagnosticoOutro"> <label for="diagnosticoOutro">Outro:</label> <input type="text" class="form-input w-2/3 ml-2" placeholder="Especificar"></div>
+                </div>
+
+                <p class="form-label mt-6">Origem:</p>
+                <div class="radio-group">
+                    <div class="checkbox-item"><input type="radio" name="origem" id="origemEsqueletica" value="Esquelética"> <label for="origemEsqueletica">Esquelética</label></div>
+                    <div class="checkbox-item"><input type="radio" name="origem" id="origemDentaria" value="Dentária"> <label for="origemDentaria">Dentária</label></div>
+                </div>
+            </section>
+
+            <!-- III. Objetivos do Tratamento -->
+            <section class="form-group">
+                <h2 class="text-2xl font-semibold text-slate-700 section-title">III. Objetivos do Tratamento</h2>
+                <div class="checkbox-group">
+                    <div class="checkbox-item"><input type="checkbox" id="melhorarEstetica"> <label for="melhorarEstetica">Melhorar a estética do sorriso</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="melhorarFuncao"> <label for="melhorarFuncao">Melhorar a função mastigatória</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="corrigirMordida"> <label for="corrigirMordida">Corrigir a mordida</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="alinharDentes"> <label for="alinharDentes">Alinhar os dentes</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="objetivoOutro"> <label for="objetivoOutro">Outro:</label> <input type="text" class="form-input w-2/3 ml-2" placeholder="Especificar"></div>
+                </div>
+            </section>
+
+            <!-- IV. Proposta de Tratamento -->
+            <section class="form-group">
+                <h2 class="text-2xl font-semibold text-slate-700 section-title">IV. Proposta de Tratamento</h2>
+                <p class="form-label">Abordagem:</p>
+                <div class="checkbox-group">
+                    <div class="checkbox-item"><input type="checkbox" id="semExtracoes"> <label for="semExtracoes">Sem extrações</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="comExtracoes"> <label for="comExtracoes">Com extrações (especificar):</label> <input type="text" class="form-input w-2/3 ml-2" placeholder="Ex: 18,28,38,48"></div>
+                    <div class="checkbox-item"><input type="checkbox" id="comDesgastes"> <label for="comDesgastes">Com desgastes (stripping)</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="comExpansao"> <label for="comExpansao">Com expansão</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="cirurgiaOrtognatica"> <label for="cirurgiaOrtognatica">Com cirurgia ortognática</label></div>
+                </div>
+
+                <p class="form-label mt-6">Aparelho Sugerido:</p>
+                <div class="checkbox-group">
+                    <div class="checkbox-item"><input type="checkbox" id="fixoMetalico"> <label for="fixoMetalico">Aparelho fixo metálico</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="fixoEstetico"> <label for="fixoEstetico">Aparelho fixo estético</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="autoligado"> <label for="autoligado">Aparelho autoligado</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="alinhadoresEsteticos"> <label for="alinhadoresEsteticos">Alinhadores estéticos (Invisalign, etc.)</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="removivel"> <label for="removivel">Aparelho removível</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="ortopedico"> <label for="ortopedico">Aparelho ortopédico</label></div>
+                </div>
+
+                <div class="mt-6">
+                    <label for="estimatedTime" class="form-label">Tempo Estimado de Tratamento:</label>
+                    <input type="text" id="estimatedTime" class="form-input" placeholder="Ex: 18-24 meses">
+                </div>
+            </section>
+
+            <!-- OBSERVAÇÕES -->
+            <section class="form-group">
+                <h2 class="text-2xl font-semibold text-slate-700 section-title">OBSERVAÇÕES</h2>
+                <textarea id="observations" class="form-textarea" rows="4" placeholder="Adicione quaisquer observações relevantes aqui..."></textarea>
+            </section>
+
+            <!-- V. Próximos Passos -->
+            <section class="form-group">
+                <h2 class="text-2xl font-semibold text-slate-700 section-title">V. Próximos Passos</h2>
+                <div class="checkbox-group">
+                    <div class="checkbox-item"><input type="checkbox" id="discussaoDetalhada"> <label for="discussaoDetalhada">Discussão detalhada do plano</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="inicioTratamento"> <label for="inicioTratamento">Início do tratamento</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="duvidasEsclarecimentos"> <label for="duvidasEsclarecimentos">Dúvidas e esclarecimentos</label></div>
+                </div>
+            </section>
+
+            <!-- VI. Termo de Consentimento Simplificado -->
+            <section class="form-group">
+                <h2 class="text-2xl font-semibold text-slate-700 section-title">VI. Termo de Consentimento Simplificado</h2>
+                <p class="mb-4 text-slate-700">
+                    <strong class="font-medium">Declaração:</strong> Eu, <input type="text" id="consentPatientName" class="form-input inline-block w-auto px-2 py-1 text-base" style="width: 250px;" placeholder="Nome do Paciente/Responsável">, declaro que o plano de tratamento ortodôntico proposto foi explicado e compreendido. Estou ciente dos objetivos, do aparelho sugerido, do tempo estimado e das possíveis intercorrências.
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                    <div>
+                        <p class="mb-1">_______________________________________</p>
+                        <p class="text-sm text-slate-500">Assinatura do Paciente/Responsável</p>
+                    </div>
+                    <div>
+                        <p class="mb-1">_______________________________________</p>
+                        <p class="text-sm text-slate-500">Assinatura do Ortodontista</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label for="consentDate" class="form-label">Data:</label>
+                    <input type="date" id="consentDate" class="form-input">
+                </div>
+            </section>
+
+            <div class="form-buttons">
+                <button type="submit" class="primary">Salvar Ficha</button>
+                <button type="button" id="newFormBtn" class="secondary">Nova Ficha</button>
+                <button type="button" id="generatePdfBtn" class="pdf">Gerar PDF</button>
+            </div>
+        </form>
+
+        <section class="mt-8">
+            <h2 class="text-2xl font-semibold text-slate-700 section-title">Fichas Salvas</h2>
+            <div id="savedFormsList" class="saved-forms-list">
+                <p class="text-slate-500 text-center" id="noFormsMessage">Nenhuma ficha salva ainda.</p>
+                <!-- Fichas salvas serão carregadas aqui -->
+            </div>
+        </section>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, addDoc, collection, query, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase variables
+        let app;
+        let db;
+        let auth;
+        let userId = 'loading'; // Default until authenticated
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Moved to global scope
+
+        // UI Elements
+        const messageBox = document.getElementById('messageBox');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const orthoForm = document.getElementById('orthoForm');
+        const newFormBtn = document.getElementById('newFormBtn');
+        const generatePdfBtn = document.getElementById('generatePdfBtn'); // Get the new PDF button
+        const savedFormsList = document.getElementById('savedFormsList');
+        const noFormsMessage = document.getElementById('noFormsMessage');
+
+        // Helper to show messages
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.className = `message-box ${type}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000); // Hide after 5 seconds
+        }
+
+        // Function to collect all form data
+        function collectFormData() {
+            const formData = {};
+            // Text inputs
+            formData.orthodontistName = document.getElementById('orthodontistName').value;
+            formData.patientName = document.getElementById('patientName').value;
+            formData.patientAge = document.getElementById('patientAge').value;
+            formData.mainComplaint = document.getElementById('mainComplaint').value;
+            formData.comExtracoes = document.getElementById('comExtracoes').nextElementSibling.value; // Get value from adjacent input
+            formData.diagnosticoOutro = document.getElementById('diagnosticoOutro').nextElementSibling.value;
+            formData.objetivoOutro = document.getElementById('objetivoOutro').nextElementSibling.value;
+            formData.estimatedTime = document.getElementById('estimatedTime').value;
+            formData.observations = document.getElementById('observations').value; // New observations field
+            formData.consentPatientName = document.getElementById('consentPatientName').value;
+            formData.consentDate = document.getElementById('consentDate').value;
+
+            // Checkboxes (Problemas Principais)
+            const problemasPrincipais = [];
+            document.querySelectorAll('#apinhamento, #espacamento, #mordidaAberta, #mordidaProfunda, #mordidaCruzada, #classeI, #classeII, #classeIII').forEach(checkbox => {
+                if (checkbox.checked) {
+                    problemasPrincipais.push(checkbox.id);
+                }
+            });
+            formData.problemasPrincipais = problemasPrincipais;
+
+            // Radio (Origem)
+            const origemRadio = document.querySelector('input[name="origem"]:checked');
+            formData.origem = origemRadio ? origemRadio.value : '';
+
+            // Checkboxes (Objetivos do Tratamento)
+            const objetivosTratamento = [];
+            document.querySelectorAll('#melhorarEstetica, #melhorarFuncao, #corrigirMordida, #alinharDentes').forEach(checkbox => {
+                if (checkbox.checked) {
+                    objetivosTratamento.push(checkbox.id);
+                }
+            });
+            formData.objetivosTratamento = objetivosTratamento;
+
+            // Checkboxes (Abordagem)
+            const abordagem = [];
+            document.querySelectorAll('#semExtracoes, #comExtracoes, #comDesgastes, #comExpansao, #cirurgiaOrtognatica').forEach(checkbox => {
+                if (checkbox.checked) {
+                    abordagem.push(checkbox.id);
+                }
+            });
+            formData.abordagem = abordagem;
+
+            // Checkboxes (Aparelho Sugerido)
+            const aparelhoSugestao = [];
+            document.querySelectorAll('#fixoMetalico, #fixoEstetico, #autoligado, #alinhadoresEsteticos, #removivel, #ortopedico').forEach(checkbox => {
+                if (checkbox.checked) {
+                    aparelhoSugestao.push(checkbox.id);
+                }
+            });
+            formData.aparelhoSugestao = aparelhoSugestao;
+
+            // Checkboxes (Próximos Passos)
+            const proximosPassos = [];
+            document.querySelectorAll('#discussaoDetalhada, #inicioTratamento, #duvidasEsclarecimentos').forEach(checkbox => {
+                if (checkbox.checked) {
+                    proximosPassos.push(checkbox.id);
+                }
+            });
+            formData.proximosPassos = proximosPassos;
+
+            return formData;
+        }
+
+        // Function to populate form with data
+        function populateForm(data) {
+            document.getElementById('orthodontistName').value = data.orthodontistName || '';
+            document.getElementById('patientName').value = data.patientName || '';
+            document.getElementById('patientAge').value = data.patientAge || '';
+            document.getElementById('mainComplaint').value = data.mainComplaint || '';
+            document.getElementById('comExtracoes').nextElementSibling.value = data.comExtracoes || '';
+            document.getElementById('diagnosticoOutro').nextElementSibling.value = data.diagnosticoOutro || '';
+            document.getElementById('objetivoOutro').nextElementSibling.value = data.objetivoOutro || '';
+            document.getElementById('estimatedTime').value = data.estimatedTime || '';
+            document.getElementById('observations').value = data.observations || ''; // Populate observations
+            document.getElementById('consentPatientName').value = data.consentPatientName || '';
+            document.getElementById('consentDate').value = data.consentDate || '';
+
+            // Clear all checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
+            // Populate checkboxes (Problemas Principais)
+            if (data.problemasPrincipais) {
+                data.problemasPrincipais.forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+
+            // Populate radio (Origem)
+            if (data.origem) {
+                const radio = document.querySelector(`input[name="origem"][value="${data.origem}"]`);
+                if (radio) radio.checked = true;
+            } else {
+                document.querySelectorAll('input[name="origem"]').forEach(radio => radio.checked = false);
+            }
+
+            // Populate checkboxes (Objetivos do Tratamento)
+            if (data.objetivosTratamento) {
+                data.objetivosTratamento.forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+
+            // Populate checkboxes (Abordagem)
+            if (data.abordagem) {
+                data.abordagem.forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+
+            // Populate checkboxes (Aparelho Sugerido)
+            if (data.aparelhoSugestao) {
+                data.aparelhoSugestao.forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+
+            // Populate checkboxes (Próximos Passos)
+            if (data.proximosPassos) {
+                data.proximosPassos.forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+        }
+
+        // Function to clear the form
+        function clearForm() {
+            orthoForm.reset(); // Resets all form fields
+            // Manually clear text inputs associated with checkboxes if they are not reset by form.reset()
+            document.getElementById('comExtracoes').nextElementSibling.value = '';
+            document.getElementById('diagnosticoOutro').nextElementSibling.value = '';
+            document.getElementById('objetivoOutro').nextElementSibling.value = '';
+            document.getElementById('consentPatientName').value = '';
+            document.getElementById('orthodontistName').value = ''; // Clear orthodontist name too
+            document.getElementById('consentDate').value = ''; // Clear date
+            document.getElementById('observations').value = ''; // Clear observations
+        }
+
+        // Save form data to Firestore
+        async function saveFormData(event) {
+            event.preventDefault(); // Prevent default form submission
+            if (!userId || userId === 'loading') {
+                showMessage('Erro: Usuário não autenticado. Tente recarregar a página.', 'error');
+                return;
+            }
+
+            const formData = collectFormData();
+            if (!formData.patientName) {
+                showMessage('Por favor, preencha o nome do paciente.', 'error');
+                return;
+            }
+
+            try {
+                // Add userId and timestamp to the form data
+                formData.createdBy = userId;
+                formData.createdAt = new Date().toISOString(); // ISO string for consistent date format
+
+                // Use patientName as part of the document ID for easier retrieval, or just let Firestore generate one.
+                // For simplicity and uniqueness, let Firestore generate the ID and store patientName inside.
+                const docRef = await addDoc(collection(db, `artifacts/${appId}/public/data/fichasOrtodonticas`), formData);
+                showMessage(`Ficha salva com sucesso! ID: ${docRef.id}`, 'success');
+                clearForm(); // Clear form after successful save
+            } catch (e) {
+                console.error("Erro ao salvar a ficha: ", e);
+                showMessage('Erro ao salvar a ficha. Verifique o console para detalhes.', 'error');
+            }
+        }
+
+        // Load a specific form by its ID
+        async function loadSpecificForm(docId) {
+            try {
+                const docRef = doc(db, `artifacts/${appId}/public/data/fichasOrtodonticas`, docId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    populateForm(docSnap.data());
+                    showMessage(`Ficha do paciente "${docSnap.data().patientName || 'Não Informado'}" carregada.`, 'success');
+                } else {
+                    showMessage('Ficha não encontrada.', 'error');
+                }
+            } catch (e) {
+                console.error("Erro ao carregar a ficha: ", e);
+                showMessage('Erro ao carregar a ficha. Verifique o console para detalhes.', 'error');
+            }
+        }
+
+        // Listen for real-time updates to the saved forms list
+        function setupFormsListener() {
+            const q = collection(db, `artifacts/${appId}/public/data/fichasOrtodonticas`);
+            onSnapshot(q, (snapshot) => {
+                savedFormsList.innerHTML = ''; // Clear current list
+                if (snapshot.empty) {
+                    noFormsMessage.classList.remove('hidden');
+                    return;
+                } else {
+                    noFormsMessage.classList.add('hidden');
+                }
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const listItem = document.createElement('div');
+                    listItem.className = 'saved-forms-list-item';
+                    const patientName = data.patientName || 'Paciente Não Informado';
+                    const orthodontist = data.orthodontistName || 'Ortodontista Não Informado';
+                    const createdAt = data.createdAt ? new Date(data.createdAt).toLocaleDateString('pt-BR') : 'Data Desconhecida';
+
+                    listItem.innerHTML = `
+                        <div>
+                            <p class="font-semibold">${patientName}</p>
+                            <p class="text-sm text-slate-600">Ortodontista: ${orthodontist}</p>
+                            <p class="text-xs text-slate-500">Salvo em: ${createdAt}</p>
+                        </div>
+                        <button data-id="${doc.id}">Ver/Editar</button>
+                    `;
+                    listItem.querySelector('button').addEventListener('click', () => loadSpecificForm(doc.id));
+                    savedFormsList.appendChild(listItem);
+                });
+            }, (error) => {
+                console.error("Erro ao ouvir as fichas salvas: ", error);
+                showMessage('Erro ao carregar a lista de fichas. Verifique o console.', 'error');
+            });
+        }
+
+        // Function to generate PDF
+        async function generatePdf() {
+            const patientName = document.getElementById('patientName').value || 'Paciente Sem Nome';
+            const formElement = document.getElementById('orthoForm'); // Get the form element
+
+            showMessage('Gerando PDF...', 'success');
+
+            try {
+                // Temporarily hide buttons and other non-form elements for cleaner PDF
+                const buttonsDiv = document.querySelector('.form-buttons');
+                const savedFormsSection = document.querySelector('section.mt-8');
+                const messageBoxTemp = document.getElementById('messageBox');
+
+                buttonsDiv.classList.add('hidden');
+                savedFormsSection.classList.add('hidden');
+                messageBoxTemp.classList.add('hidden');
+
+
+                // Use html2canvas to render the form as an image
+                const canvas = await html2canvas(formElement, {
+                    scale: 2, // Increase scale for better resolution
+                    useCORS: true, // Enable CORS if you have external images (though not used here)
+                    windowWidth: formElement.scrollWidth,
+                    windowHeight: formElement.scrollHeight
+                });
+
+                // Re-show hidden elements
+                buttonsDiv.classList.remove('hidden');
+                savedFormsSection.classList.remove('hidden');
+                messageBoxTemp.classList.remove('hidden');
+
+
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4'); // 'p' for portrait, 'mm' for millimeters, 'a4' size
+
+                const imgWidth = 210; // A4 width in mm
+                const pageHeight = 297; // A4 height in mm
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                pdf.save(`Ficha_Clinica_${patientName.replace(/ /g, '_')}.pdf`);
+                showMessage('PDF gerado com sucesso!', 'success');
+
+            } catch (error) {
+                console.error("Erro ao gerar PDF: ", error);
+                showMessage('Erro ao gerar PDF. Verifique o console para detalhes.', 'error');
+            }
+        }
+
+
+        // Firebase Initialization and Authentication
+        async function initFirebaseAndAuth() {
+            try {
+                const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+                if (Object.keys(firebaseConfig).length === 0) {
+                    console.error("Firebase config is empty. Cannot initialize Firebase.");
+                    showMessage("Erro: Configuração do Firebase ausente. Recarregue a página.", "error");
+                    return;
+                }
+
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // Authenticate user
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdDisplay.textContent = userId;
+                        showMessage('Autenticado com sucesso!', 'success');
+                        setupFormsListener(); // Start listening for forms after auth
+                    } else {
+                        userId = 'anonymous';
+                        userIdDisplay.textContent = 'Anônimo';
+                        showMessage('Não autenticado. Você está usando uma sessão anônima.', 'error');
+                    }
+                });
+
+            } catch (e) {
+                console.error("Erro na inicialização do Firebase ou autenticação: ", e);
+                showMessage('Erro na inicialização. Verifique o console para detalhes.', 'error');
+            }
+        }
+
+        // Event Listeners
+        orthoForm.addEventListener('submit', saveFormData);
+        newFormBtn.addEventListener('click', clearForm);
+        generatePdfBtn.addEventListener('click', generatePdf); // Attach PDF generation to button
+
+        // Initialize Firebase on window load
+        window.onload = initFirebaseAndAuth;
+    </script>
+</body>
+</html>
+
